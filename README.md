@@ -135,6 +135,34 @@ chmod +x generate_plot.sh
 [![Win Rate Plot](analysis/monty_hall_winrate_over_time_3doors.svg)](analysis/monty_hall_winrate_over_time_3doors.svg)
 
 
+## Performance
+
+The Monty Hall simulation is trivially parallelizable, making it a great candidate for GPU acceleration.  
+Below are benchmark results from my system:
+
+**Test System**  
+- **CPU:** AMD Ryzen 9 3950X  
+- **GPU:** AMD Radeon RX 6900 XT  
+- **OS:** Manjaro Linux
+- **HIP runtime:** ROCm ROCm 6.4.1 
+
+| Implementation | Iterations   | Runtime (ms) | Iterations/sec     | Relative Speedup*         |
+|----------------|-------------|---------------|--------------------|---------------------------|
+| Python (CPU)   | 1,000,000   | 9,570         | 104,529            | 1×                        |
+| Python (CPU)   | 10,000,000  | 94,241        | 106,042            | 1×                        |
+| HIP (GPU)      | 10,000,000  | 373           | 26,819,742         | 253×                      |
+| HIP (GPU)      | 100,000,000 | 701           | 142,724,168        | 1365×                     |
+
+\*Speedup calculated per iteration vs. Python single-thread for the same iteration count (except 100M HIP vs 1M Python).
+
+
+> **Note:**  
+> The Monty Hall problem converges very quickly after ~300 iterations, the win rates for "switch" and "stay" are already close to their theoretical probabilities (≈66.6% and ≈33.3%, respectively).  
+> These benchmarks demonstrate how well the HIP implementation handles large-scale simulations.
+> The runtimes are rounded to nearest ms.
+
+
+
 ## License
 
 MIT License. See [LICENSE](LICENSE)
