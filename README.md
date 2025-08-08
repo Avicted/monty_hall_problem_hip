@@ -63,7 +63,7 @@ Run the simulation with optional arguments:
 
 The program prints device info, memory usage, kernel configuration, and simulation results:
 
-```
+```bash
 Monty Hall Problem:
     HIP Device Count: 1
     Device 0: AMD Radeon RX 6900 XT
@@ -144,7 +144,7 @@ Below are benchmark results from my system:
 - **CPU:** AMD Ryzen 9 3950X  
 - **GPU:** AMD Radeon RX 6900 XT  
 - **OS:** Manjaro Linux
-- **HIP runtime:** ROCm ROCm 6.4.1 
+- **HIP runtime:** ROCm 6.4.1 
 
 | Implementation | Iterations   | Runtime (ms) | Iterations/sec     | Relative Speedup*         |
 |----------------|-------------|---------------|--------------------|---------------------------|
@@ -159,7 +159,7 @@ Below are benchmark results from my system:
 > **Note:**  
 > The Monty Hall problem converges very quickly after ~300 iterations, the win rates for "switch" and "stay" are already close to their theoretical probabilities (≈66.6% and ≈33.3%, respectively).  
 > These benchmarks demonstrate how well the HIP implementation handles large-scale simulations.
-> The runtimes are rounded to nearest ms.
+> The runtimes are rounded to the nearest millisecond.
 
 
 
