@@ -30,7 +30,7 @@ This program simulates the classic Monty Hall problem, generalized to **N doors*
 
 2. **Clone the repository**
    ```sh
-   git clone https://github.com/Avicted/monty_hall_problem_hip.git
+   git clone git@github.com:Avicted/monty_hall_problem_hip.git
    cd monty_hall_problem_hip
    ```
 
