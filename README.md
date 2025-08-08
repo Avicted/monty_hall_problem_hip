@@ -53,7 +53,7 @@ Run the simulation with optional arguments:
 ./build/monty_hall_problem_hip.out [--stay | --switch] [--iterations=N] [--doors=N]
 ```
 
-- `--stay`           Use the "stay" strategy (default is "switch")
+- `--stay`           Use the "stay" strategy (default: "switch")
 - `--switch`         Use the "switch" strategy
 - `--iterations=N`   Run N iterations (default: 100,000,000)
 - `--doors=N`        Use N doors (default: 3, minimum: 3, maximum: 128)
