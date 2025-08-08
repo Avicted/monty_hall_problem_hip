@@ -38,7 +38,7 @@ This program simulates the classic Monty Hall problem, allowing you to choose be
    ./build.sh
    ```
 
-   This will hipify and compile the code, producing `build/monty_hall_problem_hip.out`.
+   This will compile the code using `hipcc`, producing `build/monty_hall_problem_hip.out`.
 
 ## Usage
 
@@ -102,6 +102,15 @@ Monty Hall Problem Results:
 Total runtime: 699.24 ms
 ```
 
+## Troubleshooting
+
+- **Out of Memory:**  
+  If you request more iterations than your GPU memory can handle, the program will warn you and may fail. Reduce the number of iterations.
+- **Grid Size Exceeded:**  
+  If you request more blocks than your GPU supports, the program will warn you and exit. Reduce the number of iterations or increase `threadsPerBlock` if possible.
+- **No HIP Device Found:**  
+  Ensure your system has a supported AMD or NVIDIA GPU and ROCm is installed correctly.
+
 ## License
 
-MIT License.
+MIT License. See [LICENSE](LICENSE) for details.
