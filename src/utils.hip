@@ -15,11 +15,11 @@ static int
 get_hip_devices(void)
 {
     int deviceCount = 0;
-    hipError_t Error = hipGetDeviceCount(&deviceCount);
+    hipError_t error = hipGetDeviceCount(&deviceCount);
 
-    if (Error != hipSuccess)
+    if (error != hipSuccess)
     {
-        printf("    Failed to get HIP Device Count: %s\n", hipGetErrorString(Error));
+        printf("    Failed to get HIP Device Count: %s\n", hipGetErrorString(error));
         return -1;
     }
     else
@@ -30,11 +30,11 @@ get_hip_devices(void)
     for (int i = 0; i < deviceCount; i++)
     {
         hipDeviceProp_t prop;
-        hipError_t Error = hipGetDeviceProperties(&prop, i);
+        hipError_t error = hipGetDeviceProperties(&prop, i);
 
-        if (Error != hipSuccess)
+        if (error != hipSuccess)
         {
-            printf("    Failed to get HIP Device Properties: %s\n", hipGetErrorString(Error));
+            printf("    Failed to get HIP Device Properties: %s\n", hipGetErrorString(error));
             continue;
         }
         else

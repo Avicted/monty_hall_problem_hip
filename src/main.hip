@@ -13,7 +13,7 @@
 
 typedef enum
 {
-    STRATEGY_STAY,
+    STRATEGY_STAY = 0,
     STRATEGY_SWITCH,
 
     STRATEGY_COUNT
@@ -25,12 +25,27 @@ static const char *
         "Switch",
 };
 
-unsigned long long int iterations = 100'000'000;
-Strategy strategy = STRATEGY_SWITCH;
+typedef enum
+{
+    DOOR_CAR = 0,
+    DOOR_GOAT,
 
-#define RANDOM_SEED 123456789
+    DOOR_COUNT
+} DoorContent;
+
 unsigned long long int wins = 0;
 unsigned long long int losses = 0;
+
+// Constants -------------------------------------------------------------------
+#define RANDOM_SEED 123456789
+#define MIN_DOORS 3
+#define MAX_DOORS 128
+
+Strategy strategy = STRATEGY_SWITCH;
+unsigned long long int iterations = 100'000'000;
+
+int door_count = 3; // Default to 3 doors, can be changed for N-door Monty Hall
+// -----------------------------------------------------------------------------
 
 __global__ void
 setup_kernel(hiprandState *state, unsigned long long seed, int iterations)
@@ -48,7 +63,8 @@ monty_hall_problem_kernel(
     unsigned long long int *losses,
     hiprandState *state,
     Strategy strategy,
-    unsigned long long int iterations)
+    unsigned long long int iterations,
+    int d_door_count)
 {
     unsigned long long int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
     if (thread_id >= iterations)
@@ -58,31 +74,51 @@ monty_hall_problem_kernel(
 
     hiprandState localState = state[thread_id];
 
-    uint8_t doors[3] = {0, 1, 2};
+    uint8_t doors[MAX_DOORS];
+    bool opened[MAX_DOORS];
 
-    // Shuffle doors
-    for (int i = 2; i > 0; --i)
+    // Initialize all doors to goat
+    for (uint8_t i = 0; i < d_door_count; ++i)
     {
-        uint8_t rand_idx = hiprand(&localState) % (i + 1);
-        uint8_t temp = doors[i];
-        doors[i] = doors[rand_idx];
-        doors[rand_idx] = temp;
+        doors[i] = DOOR_GOAT;
+        opened[i] = false;
     }
 
-    uint8_t chosen_door = hiprand(&localState) % 3;
-    uint8_t revealed_door;
-    do
-    {
-        revealed_door = hiprand(&localState) % 3;
-    } while (revealed_door == chosen_door || doors[revealed_door] == 0);
+    // Place the prize (car) randomly
+    uint8_t prize_door = hiprand(&localState) % d_door_count;
+    doors[prize_door] = DOOR_CAR;
 
-    uint8_t remaining_door = 3 - chosen_door - revealed_door;
+    // Contestant picks a random door
+    uint8_t chosen_door = hiprand(&localState) % d_door_count;
+    opened[chosen_door] = true;
+
+    // Host opens N-2 doors that are goats and not chosen
+    uint8_t doors_to_open = d_door_count - 2;
+    while (doors_to_open > 0)
+    {
+        uint8_t door = hiprand(&localState) % d_door_count;
+        if (!opened[door] && doors[door] == DOOR_GOAT && door != chosen_door)
+        {
+            opened[door] = true;
+            doors_to_open--;
+        }
+    }
+
+    // If switching, pick the one unopened door that isn't the original choice
     if (strategy == STRATEGY_SWITCH)
     {
-        chosen_door = remaining_door;
+        for (uint8_t i = 0; i < d_door_count; ++i)
+        {
+            if (!opened[i] && i != chosen_door)
+            {
+                chosen_door = i;
+                break;
+            }
+        }
     }
 
-    if (doors[chosen_door] == 0)
+    // Win/Loss record
+    if (doors[chosen_door] == DOOR_CAR)
     {
         atomicAdd(wins, 1);
     }
@@ -91,7 +127,8 @@ monty_hall_problem_kernel(
         atomicAdd(losses, 1);
     }
 
-    state[thread_id] = localState; // Save state back
+    // Save RNG state
+    state[thread_id] = localState;
 }
 
 static void
@@ -99,8 +136,18 @@ parse_input_args(
     int argc,
     char **argv,
     Strategy *strategy,
-    unsigned long long int *iterations) // Change type here
+    unsigned long long int *iterations,
+    int *door_count)
 {
+    if (argc == 2 &&
+        (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0))
+    {
+        fprintf(stderr, "Usage: %s [--stay | --switch] [--iterations=N] [--doors=N]\n", argv[0]);
+        fprintf(stderr, "Default strategy is --switch, iterations is %llu, and doors is %d.\n",
+                *iterations, *door_count);
+        exit(0);
+    }
+
     for (int i = 1; i < argc; ++i)
     {
         if (strcmp(argv[i], "--stay") == 0)
@@ -117,7 +164,6 @@ parse_input_args(
             char *endptr = NULL;
             errno = 0;
 
-            // Check for negative sign
             if (iter_str[0] == '-')
             {
                 fprintf(stderr, "Invalid value for --iterations ('%s'), must be a positive integer. Using default (%llu).\n",
@@ -139,11 +185,39 @@ parse_input_args(
                 *iterations = val;
             }
         }
+        else if (strncmp(argv[i], "--doors=", 8) == 0)
+        {
+            const char *doors_str = argv[i] + 8;
+            char *endptr = NULL;
+            errno = 0;
+
+            if (doors_str[0] == '-')
+            {
+                fprintf(stderr, "Invalid value for --doors ('%s'), must be a positive integer. Using default (%d).\n",
+                        doors_str, *door_count);
+                continue;
+            }
+
+            int val = strtol(doors_str, &endptr, 10);
+
+            // Check for non-numeric, out-of-range, or overflow
+            if (endptr == doors_str || *endptr != '\0' || errno == ERANGE || val < MIN_DOORS || val > MAX_DOORS)
+            {
+                fprintf(stderr, "Invalid value for --doors ('%s'), must be an integer >= %d and <= %d. Using default (%d).\n",
+                        doors_str, MIN_DOORS, MAX_DOORS, *door_count);
+                continue;
+            }
+            else
+            {
+                *door_count = val;
+            }
+        }
         else
         {
             fprintf(stderr, "Unknown argument: %s\n", argv[i]);
-            fprintf(stderr, "Usage: %s [--stay | --switch] [--iterations=N]\n", argv[0]);
-            fprintf(stderr, "Default strategy is --switch.\n");
+            fprintf(stderr, "Usage: %s [--stay | --switch] [--iterations=N] [--doors=N]\n", argv[0]);
+            fprintf(stderr, "Default strategy is --switch, iterations is %llu, and doors is %d.\n",
+                    *iterations, *door_count);
             exit(1);
         }
     }
@@ -152,7 +226,13 @@ int main(int argc, char **argv)
 {
     printf("Monty Hall Problem:\n");
 
-    parse_input_args(argc, argv, &strategy, &iterations);
+    parse_input_args(argc, argv, &strategy, &iterations, &door_count);
+
+    if (door_count < MIN_DOORS || door_count > MAX_DOORS)
+    {
+        fprintf(stderr, "Error: door_count must be between %d and %d.\n", MIN_DOORS, MAX_DOORS);
+        return 1;
+    }
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -190,7 +270,6 @@ int main(int argc, char **argv)
 
     unsigned long long int blocks = (iterations + threadsPerBlock - 1) / threadsPerBlock;
 
-    // Check for grid size limit
     if (blocks > static_cast<unsigned long long int>(prop.maxGridSize[0]))
     {
         fprintf(stderr,
@@ -229,9 +308,11 @@ int main(int argc, char **argv)
                 total_allocated_gb, free_mem / (1024.0 * 1024.0 * 1024.0));
     }
 
+    // Allocate device memory
     HIP_ERRCHK(hipMalloc((void **)&d_wins, wins_array_bytes));
     HIP_ERRCHK(hipMalloc((void **)&d_losses, losses_array_bytes));
 
+    // Copy initial values to device
     HIP_ERRCHK(hipMemcpy(d_wins, &wins, wins_array_bytes, hipMemcpyHostToDevice));
     HIP_ERRCHK(hipMemcpy(d_losses, &losses, losses_array_bytes, hipMemcpyHostToDevice));
 
@@ -244,25 +325,27 @@ int main(int argc, char **argv)
     hiprandState *d_state;
     HIP_ERRCHK(hipMalloc(&d_state, iterations * sizeof(hiprandState)));
 
-    // Pass iterations to kernels
+    // Run kernels
     setup_kernel<<<threadBlocks, threadsInBlock>>>(d_state, RANDOM_SEED, iterations);
-    monty_hall_problem_kernel<<<threadBlocks, threadsInBlock>>>(d_wins, d_losses, d_state, strategy, iterations);
+    monty_hall_problem_kernel<<<threadBlocks, threadsInBlock>>>(d_wins, d_losses, d_state, strategy, iterations, door_count);
 
     HIP_ERRCHK(hipGetLastError());
-
     HIP_ERRCHK(hipDeviceSynchronize());
 
+    // Copy results back to host
     HIP_ERRCHK(hipMemcpy(&wins, d_wins, wins_array_bytes, hipMemcpyDeviceToHost));
     HIP_ERRCHK(hipMemcpy(&losses, d_losses, losses_array_bytes, hipMemcpyDeviceToHost));
 
     HIP_ERRCHK(hipDeviceSynchronize());
 
+    // Free device memory
     HIP_ERRCHK(hipFree(d_wins));
     HIP_ERRCHK(hipFree(d_losses));
     HIP_ERRCHK(hipFree(d_state));
 
     printf("\nMonty Hall Problem Results:\n");
     printf("   Strategy:\t\t%s\n", strategy_names[strategy]);
+    printf("   Doors:\t\t%d\n", door_count);
     printf("   Total Iterations:\t%llu\n", iterations);
     printf("   Wins:\t\t%llu\n", wins);
     printf("   Losses:\t\t%llu\n", losses);

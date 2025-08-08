@@ -4,12 +4,13 @@ A high-performance GPU simulation of the Monty Hall problem using AMD ROCm HIP a
 
 ## Overview
 
-This program simulates the classic Monty Hall problem, allowing you to choose between "stay" and "switch" strategies and run millions or billions of iterations efficiently on your GPU. It uses HIP for portability across AMD and NVIDIA GPUs.
+This program simulates the classic Monty Hall problem, generalized to **N doors**. You can choose between "stay" and "switch" strategies and run millions or billions of iterations efficiently on your GPU. It uses HIP for portability across AMD and NVIDIA GPUs.
 
 ## Features
 
 - Fast GPU simulation using HIP and hipRAND
 - Supports both "stay" and "switch" strategies
+- Configurable number of doors (N) via command-line
 - Configurable number of iterations via command-line
 - Reports win/loss rates and total runtime
 - Robust error handling and resource management
@@ -45,16 +46,17 @@ This program simulates the classic Monty Hall problem, allowing you to choose be
 Run the simulation with optional arguments:
 
 ```sh
-./build/monty_hall_problem_hip.out [--stay | --switch] [--iterations=N]
+./build/monty_hall_problem_hip.out [--stay | --switch] [--iterations=N] [--doors=N]
 ```
 
-- `--stay`    Use the "stay" strategy (default is "switch")
-- `--switch`   Use the "switch" strategy
-- `--iterations=N` Run N iterations (default: 100,000,000)
+- `--stay`           Use the "stay" strategy (default is "switch")
+- `--switch`         Use the "switch" strategy
+- `--iterations=N`   Run N iterations (default: 100,000,000)
+- `--doors=N`        Use N doors (default: 3, minimum: 3, maximum: 128)
 
 **Example:**
 ```sh
-./build/monty_hall_problem_hip.out --switch --iterations=10000000
+./build/monty_hall_problem_hip.out --switch --iterations=10000000 --doors=10
 ```
 
 ## Output
@@ -93,24 +95,27 @@ Monty Hall Problem:
 
 Monty Hall Problem Results:
    Strategy:            Switch
+   Doors:               3
    Total Iterations:    100000000
-   Wins:                66661336
-   Losses:              33338664
-   Win Rate:            66.661%
-   Loss Rate:           33.339%
+   Wins:                66662211
+   Losses:              33337789
+   Win Rate:            66.662%
+   Loss Rate:           33.338%
 
-Total runtime: 687.55 ms
+Total runtime: 698.46 ms
 ```
 
 ## Troubleshooting
 
 - **Out of Memory:**  
-  If you request more iterations than your GPU memory can handle, the program will warn you and may fail. Reduce the number of iterations.
+  If you request more iterations or doors than your GPU memory can handle, the program will warn you and may fail. Reduce the number of iterations or doors.
 - **Grid Size Exceeded:**  
   If you request more blocks than your GPU supports, the program will warn you and exit. Reduce the number of iterations or increase `threadsPerBlock` if possible.
+- **Invalid Door Count:**  
+  The number of doors must be between 3 and 128. The program will warn and use the default if you specify an invalid value.
 - **No HIP Device Found:**  
   Ensure your system has a supported AMD or NVIDIA GPU and ROCm is installed correctly.
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+MIT License. See [LICENSE](LICENSE)
