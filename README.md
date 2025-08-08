@@ -4,7 +4,11 @@ A high-performance GPU simulation of the [Monty Hall problem](https://en.wikiped
 
 ## Overview
 
-This program simulates the classic Monty Hall problem, generalized to **N doors**. You can choose between "stay" and "switch" strategies and run millions or billions of iterations efficiently on your GPU. It uses HIP for portability across AMD and NVIDIA GPUs.
+This program simulates the classic Monty Hall problem, generalized to **N doors**. You can choose between the "stay" and "switch" strategies and run millions or billions of iterations efficiently on your GPU. 
+
+It uses HIP for portability across AMD and NVIDIA GPUs.  
+Learn more about ROCm and HIP development here: [AMD ROCm Developer Documentation](https://rocm.docs.amd.com/en/develop/index.html)
+
 
 ## Features
 
@@ -107,14 +111,14 @@ Total runtime: 698.46 ms
 
 ## Troubleshooting
 
-- **Out of Memory:**  
+- **Out of Memory:**
   If you request more iterations or doors than your GPU memory can handle, the program will warn you and may fail. Reduce the number of iterations or doors.
-- **Grid Size Exceeded:**  
-  If you request more blocks than your GPU supports, the program will warn you and exit. Reduce the number of iterations or increase `threadsPerBlock` if possible.
-- **Invalid Door Count:**  
-  The number of doors must be between 3 and 128. The program will warn and use the default if you specify an invalid value.
-- **No HIP Device Found:**  
-  Ensure your system has a supported AMD or NVIDIA GPU and ROCm is installed correctly.
+- **Grid Size Exceeded:**
+  If you request more blocks than your GPU supports, the program will warn you and exit. Reduce the number of iterations or increase threadsPerBlock if possible.
+- **Invalid Door Count:**
+  The number of doors must be between 3 and 128. The program will warn you and use the default if you specify an invalid value.
+- **No HIP Device Found:**
+  Ensure your system has a supported AMD or NVIDIA GPU and that ROCm is installed correctly.
 
 
 ## Analysis
@@ -126,7 +130,7 @@ The plot below shows the cumulative win rate for each strategy as observed in a 
 - Python 3.x
 
 ### Analysis Script
-Generate a svg file with the plot:
+Generate an SVG file with the plot:
 ```bash
 chmod +x generate_plot.sh
 ./generate_plot.sh
