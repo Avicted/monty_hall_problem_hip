@@ -267,8 +267,8 @@ int main(int argc, char **argv)
     printf("   Wins:\t\t%llu\n", wins);
     printf("   Losses:\t\t%llu\n", losses);
 
-    printf("   Win Rate:\t\t%.2f%%\n", (wins * 100.0) / iterations);
-    printf("   Loss Rate:\t\t%.2f%%\n", (losses * 100.0) / iterations);
+    printf("   Win Rate:\t\t%.3f%%\n", static_cast<double>((wins * 100.0) / iterations));
+    printf("   Loss Rate:\t\t%.3f%%\n", static_cast<double>((losses * 100.0) / iterations));
 
     auto end_time = std::chrono::high_resolution_clock::now();
     double elapsed_ms = std::chrono::duration<double, std::milli>(end_time - start_time).count();

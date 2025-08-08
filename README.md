@@ -96,10 +96,10 @@ Monty Hall Problem Results:
    Total Iterations:    100000000
    Wins:                66661336
    Losses:              33338664
-   Win Rate:            66.66%
-   Loss Rate:           33.34%
+   Win Rate:            66.661%
+   Loss Rate:           33.339%
 
-Total runtime: 699.24 ms
+Total runtime: 687.55 ms
 ```
 
 ## Troubleshooting
