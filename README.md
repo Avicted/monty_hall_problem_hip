@@ -1,6 +1,6 @@
 # Monty Hall Problem HIP Simulation
 
-A high-performance GPU simulation of the Monty Hall problem using AMD ROCm HIP and hipRAND.
+A high-performance GPU simulation of the [Monty Hall problem](https://en.wikipedia.org/wiki/Monty_Hall_problem) using AMD ROCm HIP and hipRAND.
 
 ## Overview
 
@@ -115,6 +115,25 @@ Total runtime: 698.46 ms
   The number of doors must be between 3 and 128. The program will warn and use the default if you specify an invalid value.
 - **No HIP Device Found:**  
   Ensure your system has a supported AMD or NVIDIA GPU and ROCm is installed correctly.
+
+
+## Analysis
+To analyze the results, you can use the provided `plot.py` script.
+The plot below shows the cumulative win rate for each strategy as observed in a simulation (not theoretical values), converging toward the expected probabilities as more iterations are performed.
+
+
+### Requirements for Analysis
+- Python 3.x
+
+### Analysis Script
+Generate a svg file with the plot:
+```bash
+chmod +x generate_plot.sh
+./generate_plot.sh
+```
+
+[![Win Rate Plot](analysis/monty_hall_winrate_over_time_3doors.svg)](analysis/monty_hall_winrate_over_time_3doors.svg)
+
 
 ## License
 
