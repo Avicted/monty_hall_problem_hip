@@ -136,7 +136,7 @@ chmod +x generate_plot.sh
 ./generate_plot.sh
 ```
 
-[![Win Rate Plot](analysis/monty_hall_winrate_over_time_3doors.svg)](analysis/monty_hall_winrate_over_time_3doors.svg)
+![Win Rate Plot](analysis/monty_hall_winrate_over_time_3doors.svg)
 
 
 ## Performance
